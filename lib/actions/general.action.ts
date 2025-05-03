@@ -96,6 +96,8 @@ export async function getLatestInterviews(params: GetLatestInterviewsParams): Pr
 }
 
 export async function getInterviewsByUserId(userId: string): Promise<Interview[] | null> {
+	if (!userId) return null
+
 	const interviews = await db.collection("interviews").where("userId", "==", userId).orderBy("createdAt", "desc").get()
 
 	return interviews.docs.map((doc) => ({
