@@ -14,7 +14,7 @@ import Link from "next/link"
 import { toast } from "sonner"
 import FormField from "./FormField"
 import { useRouter } from "next/navigation"
-import { signIn, singUp } from "@/lib/actions/auth.action"
+import { signIn, signUp } from "@/lib/actions/auth.action"
 
 const authFormSchema = (type: FormType) => {
 	return z.object({
@@ -45,7 +45,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
 
 				const userCreadentials = await createUserWithEmailAndPassword(auth, email, password)
 
-				const result = await singUp({
+				const result = await signUp({
 					uid: userCreadentials.user.uid,
 					name: name!,
 					password,

@@ -4,9 +4,10 @@ import Link from "next/link"
 import DisplayTechIcons from "./DisplayTechIcons"
 import { Button } from "../ui/button"
 import { getRandomInterviewCover } from "@/lib/utils"
+import { getFeedbackByInterviewId } from "@/lib/actions/general.action"
 
-const InterviewCard = ({ role, type, interviewId, userId, techstack, createdAt }: InterviewCardProps) => {
-	const feedback = null as Feedback | null
+const InterviewCard = async ({ role, type, id, userId, techstack, createdAt }: InterviewCardProps) => {
+	const feedback = userId && id ? await getFeedbackByInterviewId({ interviewId: id, userId }) : null
 	const normalizeType = /mix/gi.test(type) ? "Mixed" : type
 	const formattedDate = dayjs(feedback?.createdAt || createdAt || Date.now()).format("DD MMM YYYY")
 
@@ -39,9 +40,7 @@ const InterviewCard = ({ role, type, interviewId, userId, techstack, createdAt }
 					<DisplayTechIcons techStack={techstack} />
 
 					<Button className="btn-primary">
-						<Link href={feedback ? `/interview/${interviewId}/feedback` : `/interview/${interviewId}`}>
-							{feedback ? "Check Feedback" : "Take Interview"}
-						</Link>
+						<Link href={feedback ? `/interview/${id}/feedback` : `/interview/${id}`}>{feedback ? "Check Feedback" : "Take Interview"}</Link>
 					</Button>
 				</div>
 			</div>

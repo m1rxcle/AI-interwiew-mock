@@ -1,5 +1,7 @@
 "use client"
 
+import { interviewer } from "@/constants"
+import { createFeedback } from "@/lib/actions/general.action"
 import { cn } from "@/lib/utils"
 import { vapi } from "@/lib/vapi.sdk"
 import Image from "next/image"
@@ -17,7 +19,7 @@ interface SavedMessage {
 	role: "user" | "system" | "assistant"
 	content: string
 }
-const Agent = ({ userName, userId, type }: AgentProps) => {
+const Agent = ({ userName, userId, type, interviewId, questions }: AgentProps) => {
 	const router = useRouter()
 
 	const [isSpeaking, setIsSpeaking] = useState(false)
@@ -69,18 +71,53 @@ const Agent = ({ userName, userId, type }: AgentProps) => {
 		}
 	}, [])
 
+	const handleGenerateFeedback = async (messages: SavedMessage[]) => {
+		console.log("Generate Feedback")
+		const { success, feedbackId: id } = await createFeedback({
+			interviewId: interviewId!,
+			userId: userId!,
+			transcript: messages,
+		})
+
+		if (success && id) {
+			router.push(`/interview/${interviewId}/feedback`)
+		} else {
+			console.log("Error generating feedback")
+			router.push("/")
+		}
+	}
+
 	useEffect(() => {
-		if (callStatus === CallStatus.FINISHED) router.push("/")
+		if (callStatus === CallStatus.FINISHED) {
+			if (type === "generate") {
+				router.push("/")
+			} else {
+				handleGenerateFeedback(messages)
+			}
+		}
 	}, [messages, callStatus, type, userId])
 
 	const handleCall = async () => {
 		setCallStatus(CallStatus.CONNECTING)
-		await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, {
-			variableValues: {
-				username: userName,
-				userid: userId,
-			},
-		})
+		if (type === "generate") {
+			await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, {
+				variableValues: {
+					username: userName,
+					userid: userId,
+				},
+			})
+		} else {
+			let formattedQuestions = ""
+			if (questions) {
+				formattedQuestions = questions.map((question) => `- ${question}`).join("\n")
+			}
+
+			await vapi.start(interviewer, {
+				variableValues: {
+					questions: formattedQuestions,
+				},
+			})
+		}
 	}
 	const handleDisconnect = async () => {
 		setCallStatus(CallStatus.FINISHED)
